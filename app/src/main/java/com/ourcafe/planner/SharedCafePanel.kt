@@ -20,6 +20,7 @@ private val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 private fun inviteCode(): String = (1..8).map { alphabet[SecureRandom().nextInt(alphabet.length)] }.joinToString("")
 private data class SharedEntry(val id: String, val text: String, val amount: Long = 0L)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharedCafePanel() {
     if (!BuildConfig.FIREBASE_ENABLED) return
