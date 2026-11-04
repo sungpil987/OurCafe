@@ -54,7 +54,9 @@ private val tiles = listOf(
     Tile(Icons.Outlined.TableRestaurant, "좌석 매출", "회전율·이용률 시뮬레이션", "seats"),
     Tile(Icons.Outlined.MenuBook, "표준 레시피", "재료 계량·제조 순서", "recipes"),
     Tile(Icons.Outlined.Palette, "브랜드 콘셉트", "상호·슬로건·차별점", "branding"),
-    Tile(Icons.Outlined.Campaign, "오픈 마케팅", "홍보 준비·아이디어", "marketing")
+    Tile(Icons.Outlined.Campaign, "오픈 마케팅", "홍보 준비·아이디어", "marketing"),
+    Tile(Icons.Outlined.Scale, "원재료 단가표", "구매량·가격·단위당 원가", "ingredientprices"),
+    Tile(Icons.Outlined.AutoGraph, "레시피 자동 원가", "재료 사용량으로 이익 계산", "recipecost")
 )
 
 class MainActivity : ComponentActivity() {
@@ -228,6 +230,8 @@ class MainActivity : ComponentActivity() {
                             "recipes" -> Recipes11()
                             "branding" -> Branding11()
                             "marketing" -> Marketing11()
+                            "ingredientprices" -> IngredientPrices12()
+                            "recipecost" -> RecipeCost12()
                             "shared" -> {
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
