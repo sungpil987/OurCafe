@@ -123,6 +123,11 @@ class MainActivity : ComponentActivity() {
             val forest = palette.primary
             val cream = palette.background
             val muted = if (dark) Color(0xFFB6C5B9) else Color(0xFF7D897C)
+            var openingDate by remember { mutableStateOf(prefs.getString("opening_date_11", "") ?: "") }
+            var openingDateDraft by remember { mutableStateOf(openingDate) }
+            val daysUntilOpening = remember(openingDate) {
+                runCatching { java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), java.time.LocalDate.parse(openingDate)) }.getOrNull()
+            }
             val doneCount = completed.count { it in roadmap }
             MaterialTheme(colorScheme = palette) {
                 Scaffold(containerColor = cream, bottomBar = {
@@ -145,7 +150,7 @@ class MainActivity : ComponentActivity() {
                             Text(tiles.firstOrNull { it.destination == page }?.title ?: "카페 준비", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(16.dp))
                         } else if (tab == 0) {
-                            Text("OUR CAFÉ · WORKSPACE", color = forest, style = MaterialTheme.typography.labelLarge)
+                            Text("SS CAFE PLAN · WORKSPACE", color = forest, style = MaterialTheme.typography.labelLarge)
                             Spacer(Modifier.height(7.dp))
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("우리의 카페 만들기", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -154,6 +159,40 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             Text("오늘도 꿈에 한 걸음 가까워졌어요.", color = muted)
+                            Spacer(Modifier.height(14.dp))
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("☕ 우리 카페 오픈 카운트다운", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text(when {
+                                        daysUntilOpening == null -> "목표 오픈 날짜를 설정해 보세요."
+                                        daysUntilOpening > 0 -> "오픈까지 D-${daysUntilOpening}"
+                                        daysUntilOpening == 0L -> "오늘이 오픈 예정일이에요! 🎉"
+                                        else -> "오픈 예정일로부터 ${-daysUntilOpening}일 지났어요."
+                                    }, style = MaterialTheme.typography.titleLarge, color = forest)
+                                    OutlinedTextField(value = openingDateDraft, onValueChange = { openingDateDraft = it.take(10) },
+                                        label = { Text("목표 오픈일 (YYYY-MM-DD)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                                    Button(enabled = runCatching { java.time.LocalDate.parse(openingDateDraft) }.isSuccess,
+                                        onClick = {
+                                            openingDate = openingDateDraft
+                                            prefs.edit().putString("opening_date_11", openingDate).apply()
+                                        }) { Text("오픈 날짜 저장") }
+                                }
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                                    Text("오늘의 준비 현황", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text("창업 단계 ${doneCount}/15 · 완료한 할 일 ${tasks.count { it in taskDone }}/${tasks.size}")
+                                    LinearProgressIndicator(progress = { doneCount / 15f }, modifier = Modifier.fillMaxWidth())
+                                    Text("저장한 메모 ${notes.size}개 · 일정 ${schedule.size}개", color = muted)
+                                    Text("등록한 예산 기록 ${expenses.size}개", color = muted)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedButton(onClick = { tab = 1; page = null }) { Text("할 일 보기") }
+                                        OutlinedButton(onClick = { tab = 3; page = null }) { Text("일정 보기") }
+                                    }
+                                }
+                            }
+
                             Spacer(Modifier.height(20.dp))
                             Card(shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                                 Column(Modifier.padding(20.dp)) {
