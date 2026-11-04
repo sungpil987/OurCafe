@@ -10,6 +10,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,14 +32,14 @@ private val roadmap = listOf(
     "브랜드 이름과 로고", "인테리어 견적 비교", "커피 장비 선정",
     "메뉴와 원가표", "인허가 준비", "가오픈 테스트", "정식 오픈"
 )
-private data class Tile(val icon: String, val title: String, val subtitle: String, val destination: String)
+private data class Tile(val icon: ImageVector, val title: String, val subtitle: String, val destination: String)
 private val tiles = listOf(
-    Tile("▤", "창업 로드맵", "단계별 체크리스트", "roadmap"),
-    Tile("▣", "예산 관리", "지출·월세·견적", "expenses"),
-    Tile("✎", "우리의 메모", "아이디어·회의록", "notes"),
-    Tile("▧", "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
-    Tile("⌖", "상권·매물", "후보지 비교·임대정보", "properties"),
-    Tile("☕", "메뉴 연구소", "레시피·원가·시식", "menus")
+    Tile(Icons.Outlined.Assignment, "창업 로드맵", "단계별 체크리스트", "roadmap"),
+    Tile(Icons.Outlined.AccountBalanceWallet, "예산 관리", "지출·월세·견적", "expenses"),
+    Tile(Icons.Outlined.Description, "우리의 메모", "아이디어·회의록", "notes"),
+    Tile(Icons.Outlined.Image, "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
+    Tile(Icons.Outlined.Place, "상권·매물", "후보지 비교·임대정보", "properties"),
+    Tile(Icons.Outlined.LocalCafe, "메뉴 연구소", "레시피·원가·시식", "menus")
 )
 
 class MainActivity : ComponentActivity() {
@@ -72,7 +75,7 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = page == null && tab == i,
                                 onClick = { tab = i; page = null },
-                                icon = { Text(listOf("⌂", "✓", "⊕", "▦", "♧")[i], style = MaterialTheme.typography.titleLarge) },
+                                icon = { Icon(listOf(Icons.Outlined.Home, Icons.Outlined.CheckCircle, Icons.Outlined.AddCircleOutline, Icons.Outlined.Event, Icons.Outlined.People)[i], contentDescription = label) },
                                 label = { Text(label) },
                                 colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFFE0E9DB))
                             )
@@ -88,10 +91,15 @@ class MainActivity : ComponentActivity() {
                         } else if (tab == 0) {
                             Text("OUR CAFÉ · WORKSPACE", color = forest, style = MaterialTheme.typography.labelLarge)
                             Spacer(Modifier.height(7.dp))
-                            Text("우리의 카페 만들기 ☕", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("우리의 카페 만들기", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                                Surface(shape = RoundedCornerShape(50), color = Color(0xFFE2EADD)) {
+                                    Icon(Icons.Outlined.Favorite, contentDescription = "우리의 카페", tint = forest, modifier = Modifier.padding(12.dp).size(26.dp))
+                                }
+                            }
                             Text("오늘도 꿈에 한 걸음 가까워졌어요.", color = muted)
                             Spacer(Modifier.height(20.dp))
-                            Card(shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
+                            Card(shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                                 Column(Modifier.padding(20.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text("창업 준비 진행률", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -107,9 +115,9 @@ class MainActivity : ComponentActivity() {
                             tiles.chunked(2).forEach { pair ->
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                                     pair.forEach { tile ->
-                                        Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(144.dp), shape = RoundedCornerShape(22.dp)) {
+                                        Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(152.dp), shape = RoundedCornerShape(22.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                                                Text(tile.icon, color = forest, style = MaterialTheme.typography.headlineSmall)
+                                                Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.size(32.dp))
                                                 Text(tile.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                                                 Text(tile.subtitle, color = muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                             }
@@ -140,8 +148,18 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             Spacer(Modifier.height(18.dp))
-                            Text("함께 만드는 우리의 공간", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("공유 공간은 아래 ‘우리’ 탭에서 사용할 수 있어요.", color = muted, style = MaterialTheme.typography.bodySmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.People, contentDescription = null, tint = forest)
+                                Spacer(Modifier.width(8.dp))
+                                Text("함께 만드는 우리의 공간", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            }
+                            Text("초대코드로 연결한 공동 공간은 ‘우리’ 탭에서 관리해요.", color = muted, style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(onClick = { tab = 4; page = null }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Outlined.People, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("우리의 공동 공간 열기")
+                            }
                             Spacer(Modifier.height(20.dp))
                         } else {
                             Text("OUR CAFÉ · WORKSPACE", color = forest, style = MaterialTheme.typography.labelLarge)
@@ -249,7 +267,7 @@ class MainActivity : ComponentActivity() {
                             tiles.drop(1).forEach { tile ->
                                 Card(onClick = { page = tile.destination }, modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp), shape = RoundedCornerShape(18.dp)) {
                                     Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Text(tile.icon, style = MaterialTheme.typography.headlineSmall, color = forest)
+                                        Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.size(28.dp))
                                         Spacer(Modifier.width(16.dp))
                                         Column { Text(tile.title, fontWeight = FontWeight.Bold); Text(tile.subtitle, color = muted, style = MaterialTheme.typography.bodySmall) }
                                     }
