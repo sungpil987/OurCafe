@@ -61,6 +61,8 @@ class MainActivity : ComponentActivity() {
                             style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(14.dp))
                         if (tab == 0) {
+                            GoogleLoginPanel()
+                            Spacer(Modifier.height(8.dp))
                             val done = completed.size
                             InfoCard("창업 준비 진행률", "$done / ${roadmap.size} 단계 완료")
                             LinearProgressIndicator(progress = { done.toFloat() / roadmap.size }, modifier = Modifier.fillMaxWidth())
