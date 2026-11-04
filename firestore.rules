@@ -30,7 +30,7 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed'])
           && request.resource.data.completed is list)
         ||
-        (request.auth.uid not in resource.data.members
+        (!(request.auth.uid in resource.data.members)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members','joinCode'])
           && request.resource.data.members.size() == resource.data.members.size() + 1
           && request.resource.data.members.hasAll(resource.data.members)
