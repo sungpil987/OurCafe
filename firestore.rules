@@ -47,8 +47,7 @@ service cloud.firestore {
           && (kind != 'tasks' || !('done' in request.resource.data) || request.resource.data.done is bool)
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 2000
-          && request.resource.data.amount is int
-          && request.resource.data.amount >= 0;
+          && (kind == 'events' || (request.resource.data.amount is int && request.resource.data.amount >= 0));
         allow delete: if kind in ['notes','tasks','expenses','events'] && member(roomId);
         allow update: if kind == 'tasks' && member(roomId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['done'])
