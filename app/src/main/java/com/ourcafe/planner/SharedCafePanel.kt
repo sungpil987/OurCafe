@@ -64,6 +64,7 @@ fun SharedCafePanel() {
     var sharedNoteTotal by remember(userId) { mutableIntStateOf(0) }
     var sharedEventTotal by remember(userId) { mutableIntStateOf(0) }
     var completed by remember(userId) { mutableStateOf(emptySet<String>()) }
+    var showTogether17 by remember(userId) { mutableStateOf(false) }
 
     DisposableEffect(userId) {
         val registration = db.collection("users").document(userId).addSnapshotListener { snapshot, ex ->
@@ -164,6 +165,11 @@ fun SharedCafePanel() {
                     Text("공동 공간에 저장한 기록 기준이며 변경 사항은 실시간 반영됩니다.", style = MaterialTheme.typography.bodySmall)
                 }
             }
+
+            OutlinedButton(onClick = { showTogether17 = !showTogether17 }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (showTogether17) "TOGETHER 2.0 접기" else "TOGETHER 2.0 · 담당자·투표·공동 예산·활동 기록")
+            }
+            if (showTogether17) TogetherStudio17(roomId!!)
 
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
