@@ -106,7 +106,7 @@ fun SharedCafePanel() {
             Button(enabled = !busy && typedCode.length == 8, onClick = {
                 perform {
                     val invite = db.collection("invites").document(typedCode).get().await()
-                    val id = invite.getString("roomId") ?: error("초대코드를 찾지 못했어요.")
+                    val id = invite.getString("roomId") ?: throw IllegalArgumentException("초대코드를 찾지 못했어요.")
                     db.collection("rooms").document(id).update(mapOf("members" to FieldValue.arrayUnion(userId), "joinCode" to typedCode)).await()
                     db.collection("users").document(userId).set(mapOf("roomId" to id)).await()
                 }
