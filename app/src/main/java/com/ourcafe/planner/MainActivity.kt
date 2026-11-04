@@ -302,7 +302,7 @@ class MainActivity : ComponentActivity() {
                             "expenses" -> BudgetCalculator06(expenses)
                             "menus" -> MenuLab06()
                             "properties" -> PropertyCompare07()
-                            "schedule" -> CafeCalendar07()
+                            "schedule" -> MonthlyCalendar14(schedule)
                             "tasks", "notes" -> {
                                 val list = when(destination) {
                                     "tasks" -> tasks; "notes" -> notes; "expenses" -> expenses
