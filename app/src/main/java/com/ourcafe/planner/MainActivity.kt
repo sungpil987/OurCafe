@@ -47,7 +47,14 @@ private val tiles = listOf(
     Tile(Icons.Outlined.Storefront, "경쟁 카페 조사", "방문·가격·차별점 기록", "competitors"),
     Tile(Icons.Outlined.RequestQuote, "장비·공사 견적", "업체별 가격·AS 비교", "quotes"),
     Tile(Icons.Outlined.PriceCheck, "메뉴별 이익", "포장·수수료·폐기 반영", "menuprofit"),
-    Tile(Icons.Outlined.EventAvailable, "오픈 준비", "15개 실무 체크리스트", "launch")
+    Tile(Icons.Outlined.EventAvailable, "오픈 준비", "15개 실무 체크리스트", "launch"),
+    Tile(Icons.Outlined.Inventory2, "원재료 재고", "재고 부족·발주 확인", "inventory"),
+    Tile(Icons.Outlined.LocalShipping, "거래처 관리", "납품·연락처·발주 조건", "vendors"),
+    Tile(Icons.Outlined.Groups, "인건비 계산", "시급·인원·근무일", "labor"),
+    Tile(Icons.Outlined.TableRestaurant, "좌석 매출", "회전율·이용률 시뮬레이션", "seats"),
+    Tile(Icons.Outlined.MenuBook, "표준 레시피", "재료 계량·제조 순서", "recipes"),
+    Tile(Icons.Outlined.Palette, "브랜드 콘셉트", "상호·슬로건·차별점", "branding"),
+    Tile(Icons.Outlined.Campaign, "오픈 마케팅", "홍보 준비·아이디어", "marketing")
 )
 
 class MainActivity : ComponentActivity() {
@@ -214,6 +221,13 @@ class MainActivity : ComponentActivity() {
                             "quotes" -> VendorQuotes10()
                             "menuprofit" -> MenuProfit10()
                             "launch" -> LaunchReady10()
+                            "inventory" -> Inventory11()
+                            "vendors" -> Vendors11()
+                            "labor" -> Labor11()
+                            "seats" -> Seats11()
+                            "recipes" -> Recipes11()
+                            "branding" -> Branding11()
+                            "marketing" -> Marketing11()
                             "shared" -> {
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
