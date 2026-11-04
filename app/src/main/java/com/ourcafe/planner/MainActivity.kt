@@ -117,7 +117,9 @@ class MainActivity : ComponentActivity() {
                                     pair.forEach { tile ->
                                         Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(152.dp), shape = RoundedCornerShape(22.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                                                Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.size(32.dp))
+                                                Surface(color = Color(0xFFE5EDE1), shape = RoundedCornerShape(15.dp)) {
+                                                    Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.padding(10.dp).size(29.dp))
+                                                }
                                                 Text(tile.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                                                 Text(tile.subtitle, color = muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                             }
