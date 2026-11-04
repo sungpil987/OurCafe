@@ -15,8 +15,8 @@ android {
         applicationId = "com.ourcafe.planner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.5.0"
+        versionCode = 21
+        versionName = "1.6.0"
         buildConfigField("boolean", "FIREBASE_ENABLED", firebaseConfigured.toString())
     }
     signingConfigs {
