@@ -94,6 +94,11 @@ class MainActivity : ComponentActivity() {
             var menus by remember { mutableStateOf(readList("menus")) }
             var schedule by remember { mutableStateOf(readList("schedule")) }
             var taskDone by remember { mutableStateOf(readList("task_done").toSet()) }
+            var recordSearch by remember(page, tab) { mutableStateOf("") }
+            var editingIndex by remember(page, tab) { mutableIntStateOf(-1) }
+            var restoreDraft by remember { mutableStateOf("") }
+            var restoreMessage by remember { mutableStateOf("") }
+            var restoreConfirm by remember { mutableStateOf(false) }
             var draft by remember(page, tab) { mutableStateOf("") }
             var amount by remember(page, tab) { mutableStateOf("") }
             fun save(key: String, values: Collection<String>) {
@@ -416,6 +421,49 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 Spacer(Modifier.height(14.dp))
+                                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text("개인 기록 복원", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        Text("이 앱에서 내보낸 JSON 백업을 붙여 넣으세요. 현재 데이터는 복원 전에 별도로 백업하세요. 공동 공간 데이터는 변경되지 않습니다.", style = MaterialTheme.typography.bodySmall)
+                                        OutlinedTextField(value = restoreDraft, onValueChange = { restoreDraft = it },
+                                            label = { Text("JSON 백업 붙여넣기") }, modifier = Modifier.fillMaxWidth(), minLines = 3, maxLines = 5)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Checkbox(checked = restoreConfirm, onCheckedChange = { restoreConfirm = it })
+                                            Text("현재 개인 기록을 백업 데이터로 덮어쓰는 데 동의합니다.", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        Button(enabled = restoreConfirm && restoreDraft.isNotBlank(), onClick = {
+                                            try {
+                                                val obj = JSONObject(restoreDraft)
+                                                val allowed = setOf("notes","tasks","completed","guide_completed","expenses","interior","properties","menus","schedule","task_done","favorite_tiles_13","opening_date_11","theme_mode_15")
+                                                val editor = prefs.edit()
+                                                val keys = obj.keys()
+                                                var count = 0
+                                                while (keys.hasNext()) {
+                                                    val key = keys.next()
+                                                    if (key !in allowed) continue
+                                                    val value = obj.get(key)
+                                                    when (value) {
+                                                        is String -> editor.putString(key, value)
+                                                        is Boolean -> editor.putBoolean(key, value)
+                                                        is Int -> editor.putInt(key, value)
+                                                        is Long -> editor.putLong(key, value)
+                                                        is Double -> editor.putFloat(key, value.toFloat())
+                                                        else -> continue
+                                                    }
+                                                    count++
+                                                }
+                                                if (count == 0) throw IllegalArgumentException("복원 가능한 기록이 없습니다.")
+                                                if (!editor.commit()) throw IllegalStateException("저장에 실패했습니다.")
+                                                restoreMessage = "${count}개 항목 복원 완료. 앱을 다시 실행하면 적용됩니다."
+                                                restoreDraft = ""; restoreConfirm = false
+                                            } catch (ex: Exception) {
+                                                restoreMessage = "복원 실패: ${ex.localizedMessage}"
+                                            }
+                                        }) { Text("개인 기록 복원") }
+                                        if (restoreMessage.isNotBlank()) Text(restoreMessage, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                                Spacer(Modifier.height(14.dp))
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
                                 SharedCafePanel()
@@ -442,6 +490,17 @@ class MainActivity : ComponentActivity() {
                                     }
                                     Spacer(Modifier.height(12.dp))
                                 }
+                                OutlinedTextField(value = recordSearch, onValueChange = { recordSearch = it }, modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("이 기록에서 검색") }, singleLine = true)
+                                if (destination == "expenses") {
+                                    val total = expenses.sumOf { it.substringBefore("|").toLongOrNull() ?: 0L }
+                                    Card(Modifier.fillMaxWidth()) {
+                                        Column(Modifier.padding(14.dp)) {
+                                            Text("총 지출 ${"%,d".format(total)}원", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                            Text("지출 기록 ${expenses.size}건 · 평균 ${"%,d".format(if (expenses.isEmpty()) 0L else total / expenses.size)}원")
+                                        }
+                                    }
+                                }
                                 OutlinedTextField(value = draft, onValueChange = { draft = it }, modifier = Modifier.fillMaxWidth(),
                                     label = { Text(when(destination) {
                                         "tasks" -> "할 일"; "notes" -> "아이디어·회의 메모"; "expenses" -> "지출 항목"
@@ -458,7 +517,7 @@ class MainActivity : ComponentActivity() {
                                 Button(enabled = draft.isNotBlank() && (destination != "expenses" || amount.toLongOrNull() != null),
                                     onClick = {
                                         val value = if (destination == "expenses") "${amount}|${draft.trim()}" else draft.trim()
-                                        val updated = list + value
+                                        val updated = if (editingIndex in list.indices) list.toMutableList().also { it[editingIndex] = value } else list + value
                                         when(destination) {
                                             "tasks" -> { tasks = updated; save("tasks", tasks) }
                                             "notes" -> { notes = updated; save("notes", notes) }
@@ -468,11 +527,12 @@ class MainActivity : ComponentActivity() {
                                             "menus" -> { menus = updated; save("menus", menus) }
                                             "schedule" -> { schedule = updated; save("schedule", schedule) }
                                         }
-                                        draft = ""; amount = ""
-                                    }) { Text("추가하기") }
+                                        draft = ""; amount = ""; editingIndex = -1
+                                    }) { Text(if (editingIndex >= 0) "수정 저장" else "추가하기") }
                                 Spacer(Modifier.height(10.dp))
                                 if (list.isEmpty()) Text("아직 기록이 없어요. 첫 항목을 추가해 보세요.", color = muted)
                                 list.forEachIndexed { index, value ->
+                                    if (recordSearch.isNotBlank() && !value.contains(recordSearch.trim(), ignoreCase = true)) return@forEachIndexed
                                     Card(Modifier.fillMaxWidth().padding(vertical = 5.dp), shape = RoundedCornerShape(16.dp)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(10.dp)) {
                                             if (destination == "tasks") Checkbox(checked = value in taskDone, onCheckedChange = { checked ->
@@ -481,6 +541,11 @@ class MainActivity : ComponentActivity() {
                                             })
                                             Text(if (destination == "expenses") "${value.substringAfter("|")} · ${value.substringBefore("|")}원" else value,
                                                 modifier = Modifier.weight(1f), maxLines = 5)
+                                            TextButton(onClick = {
+                                                editingIndex = index
+                                                draft = if (destination == "expenses") value.substringAfter("|") else value
+                                                amount = if (destination == "expenses") value.substringBefore("|") else ""
+                                            }) { Text("수정") }
                                             TextButton(onClick = {
                                                 val updated = list.filterIndexed { i, _ -> i != index }
                                                 when(destination) {
