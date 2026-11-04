@@ -58,7 +58,7 @@ fun Inventory11() {
         name = ""; unit = ""; qty = ""; min = ""; expiry = ""
     }) { Text("재고 품목 저장") }
     val low = rows.count { it.optLong("qty") <= it.optLong("min") }
-    Text("관리 품목 ${rows.size}개 · 발주 확인 필요 $low개", fontWeight = FontWeight.Bold)
+    Text("관리 품목 ${rows.size}개 · 발주 확인 필요 ${low}개", fontWeight = FontWeight.Bold)
     rows.forEach { item ->
         val lowStock = item.optLong("qty") <= item.optLong("min")
         Card(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
