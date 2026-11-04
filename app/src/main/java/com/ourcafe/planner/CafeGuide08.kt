@@ -76,6 +76,7 @@ private val scores = listOf(
     "향후 개발·상권 변화" to 5
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CafeGuide08(onOpen: (String) -> Unit, completed: Set<String>, onComplete: (String, Boolean) -> Unit) {
     var section by remember { mutableIntStateOf(0) }
