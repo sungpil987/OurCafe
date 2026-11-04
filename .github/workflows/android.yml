@@ -24,6 +24,9 @@ jobs:
         run: |
           if [ -n "$FIREBASE_CONFIG_BASE64" ]; then
             printf "%s" "$FIREBASE_CONFIG_BASE64" | base64 --decode > app/google-services.json
+          else
+            echo "::error::FIREBASE_CONFIG_BASE64 secret is missing"
+            exit 1
           fi
       - name: Restore stable Android signing key
         env:
@@ -33,8 +36,13 @@ jobs:
           if [ -n "$OURCAFE_KEYSTORE_BASE64" ] && [ -n "$OURCAFE_KEYSTORE_PASSWORD" ]; then
             printf "%s" "$OURCAFE_KEYSTORE_BASE64" | base64 --decode > app/ourcafe-signing.jks
           else
-            echo "Stable signing secrets are not set; using default debug key."
+            echo "::error::Stable signing secrets are missing"
+            exit 1
           fi
+      - name: Verify Android signing fingerprint
+        run: keytool -list -v -keystore app/ourcafe-signing.jks -storepass "$OURCAFE_KEYSTORE_PASSWORD" -alias ourcafe | grep SHA1
+        env:
+          OURCAFE_KEYSTORE_PASSWORD: ${{ secrets.OURCAFE_KEYSTORE_PASSWORD }}
       - name: Build debug APK
         env:
           OURCAFE_KEYSTORE_PASSWORD: ${{ secrets.OURCAFE_KEYSTORE_PASSWORD }}
