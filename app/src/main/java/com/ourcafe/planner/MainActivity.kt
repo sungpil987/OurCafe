@@ -34,7 +34,7 @@ private val roadmap = listOf(
 )
 private data class Tile(val icon: ImageVector, val title: String, val subtitle: String, val destination: String)
 private val tiles = listOf(
-    Tile(Icons.Outlined.Assignment, "창업 로드맵", "단계별 체크리스트", "roadmap"),
+    Tile(Icons.Outlined.Assignment, "창업 로드맵", "실전 팁·체크리스트·계약 주의", "roadmap"),
     Tile(Icons.Outlined.AccountBalanceWallet, "예산 관리", "지출·월세·견적", "expenses"),
     Tile(Icons.Outlined.Description, "우리의 메모", "아이디어·회의록", "notes"),
     Tile(Icons.Outlined.Image, "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
             var notes by remember { mutableStateOf(readList("notes")) }
             var tasks by remember { mutableStateOf(readList("tasks")) }
             var completed by remember { mutableStateOf(readList("completed").toSet()) }
+            var guideCompleted by remember { mutableStateOf(readList("guide_completed").toSet()) }
             var expenses by remember { mutableStateOf(readList("expenses")) }
             var interior by remember { mutableStateOf(readList("interior")) }
             var properties by remember { mutableStateOf(readList("properties")) }
@@ -149,6 +150,12 @@ class MainActivity : ComponentActivity() {
                                     TextButton(onClick = { tab = 1 }) { Text("할 일 관리하기 ›") }
                                 }
                             }
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(onClick = { page = "profit" }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Outlined.Calculate, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("카페 수익·손익분기점 시뮬레이터")
+                            }
                             Spacer(Modifier.height(18.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Outlined.People, contentDescription = null, tint = forest)
@@ -174,19 +181,23 @@ class MainActivity : ComponentActivity() {
                         val destination = page ?: when(tab) { 1 -> "tasks"; 3 -> "schedule"; 4 -> "shared"; else -> "" }
                         when (destination) {
                             "roadmap" -> {
-                                Text("한 단계씩 함께 준비해요", color = muted)
+                                CafeGuide08(onOpen = { page = it }, completed = guideCompleted, onComplete = { title, checked ->
+                                    guideCompleted = if (checked) guideCompleted + title else guideCompleted - title
+                                    save("guide_completed", guideCompleted)
+                                })
+                                Spacer(Modifier.height(16.dp))
+                                Text("기존 15단계 준비 체크리스트", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 roadmap.forEach { stage ->
-                                    Card(Modifier.fillMaxWidth().padding(vertical = 5.dp), shape = RoundedCornerShape(16.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(9.dp)) {
-                                            Checkbox(checked = stage in completed, onCheckedChange = { checked ->
-                                                completed = if (checked) completed + stage else completed - stage
-                                                save("completed", completed)
-                                            })
-                                            Text(stage)
-                                        }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(checked = stage in completed, onCheckedChange = { checked ->
+                                            completed = if (checked) completed + stage else completed - stage
+                                            save("completed", completed)
+                                        })
+                                        Text(stage)
                                     }
                                 }
                             }
+                            "profit" -> CafeProfit08()
                             "shared" -> {
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
