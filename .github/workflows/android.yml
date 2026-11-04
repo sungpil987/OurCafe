@@ -25,7 +25,19 @@ jobs:
           if [ -n "$FIREBASE_CONFIG_BASE64" ]; then
             printf "%s" "$FIREBASE_CONFIG_BASE64" | base64 --decode > app/google-services.json
           fi
+      - name: Restore stable Android signing key
+        env:
+          OURCAFE_KEYSTORE_BASE64: ${{ secrets.OURCAFE_KEYSTORE_BASE64 }}
+          OURCAFE_KEYSTORE_PASSWORD: ${{ secrets.OURCAFE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$OURCAFE_KEYSTORE_BASE64" ] && [ -n "$OURCAFE_KEYSTORE_PASSWORD" ]; then
+            printf "%s" "$OURCAFE_KEYSTORE_BASE64" | base64 --decode > app/ourcafe-signing.jks
+          else
+            echo "Stable signing secrets are not set; using default debug key."
+          fi
       - name: Build debug APK
+        env:
+          OURCAFE_KEYSTORE_PASSWORD: ${{ secrets.OURCAFE_KEYSTORE_PASSWORD }}
         run: gradle :app:assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
