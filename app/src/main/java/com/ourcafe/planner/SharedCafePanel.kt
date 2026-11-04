@@ -51,6 +51,7 @@ fun SharedCafePanel() {
     var error by remember(userId) { mutableStateOf<String?>(null) }
     var section by remember(userId) { mutableIntStateOf(0) }
     var draft by remember(userId) { mutableStateOf("") }
+    var editingEntryId by remember(userId) { mutableStateOf<String?>(null) }
     var price by remember(userId) { mutableStateOf("") }
     var entries by remember(userId) { mutableStateOf(emptyList<SharedEntry>()) }
     var month by remember(userId) { mutableStateOf(YearMonth.now()) }
@@ -168,7 +169,7 @@ fun SharedCafePanel() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("로드맵", "메모", "할 일", "예산", "일정").forEachIndexed { i, label ->
                     FilterChip(selected = section == i, onClick = {
-                        section = i; draft = ""; price = ""; entries = emptyList()
+                        section = i; draft = ""; price = ""; editingEntryId = null; entries = emptyList()
                     }, label = { Text(label) })
                 }
             }
@@ -226,6 +227,12 @@ fun SharedCafePanel() {
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Text(event.text, modifier = Modifier.weight(1f))
                         TextButton(enabled = !busy, onClick = {
+                            editingEntryId = event.id
+                            draft = event.text
+                            eventDate = event.date
+                            eventNote = ""
+                        }) { Text("수정") }
+                        TextButton(enabled = !busy, onClick = {
                             perform { db.collection("rooms").document(roomId!!).collection("events").document(event.id).delete().await() }
                         }) { Text("삭제") }
                     }
@@ -239,13 +246,13 @@ fun SharedCafePanel() {
                     val date = eventDate
                     val detail = eventNote.trim()
                     perform {
-                        db.collection("rooms").document(roomId!!).collection("events").add(
-                            mapOf("text" to (if (detail.isBlank()) title else "$title · $detail"), "date" to date,
-                                "createdAt" to FieldValue.serverTimestamp())
-                        ).await()
-                        draft = ""; eventNote = ""
+                        val collection = db.collection("rooms").document(roomId!!).collection("events")
+                        val fields = mapOf("text" to (if (detail.isBlank()) title else "$title · $detail"), "date" to date)
+                        if (editingEntryId == null) collection.add(fields + mapOf("createdAt" to FieldValue.serverTimestamp())).await()
+                        else collection.document(editingEntryId!!).update(fields).await()
+                        draft = ""; eventNote = ""; editingEntryId = null
                     }
-                }) { Text("공유 일정 저장") }
+                }) { Text(if (editingEntryId == null) "공유 일정 저장" else "일정 수정 저장") }
                 Text("두 사람의 공동 공간에 저장한 일정은 실시간으로 동기화돼요.", style = MaterialTheme.typography.bodySmall)
             } else {
                 OutlinedTextField(value = draft, onValueChange = { draft = it }, label = { Text(when (section) { 1 -> "공유 메모"; 2 -> "공유 할 일"; else -> "지출 항목" }) }, modifier = Modifier.fillMaxWidth())
@@ -254,10 +261,12 @@ fun SharedCafePanel() {
                     val kind = listOf("", "notes", "tasks", "expenses")[section]
                     val entry = mapOf("text" to draft.trim(), "amount" to (if (section == 3) price.toLongOrNull() ?: 0L else 0L), "createdAt" to FieldValue.serverTimestamp())
                     perform {
-                        db.collection("rooms").document(roomId!!).collection(kind).add(entry).await()
-                        draft = ""; price = ""
+                        val collection = db.collection("rooms").document(roomId!!).collection(kind)
+                        if (editingEntryId == null) collection.add(entry).await()
+                        else collection.document(editingEntryId!!).update(mapOf("text" to draft.trim(), "amount" to (if (section == 3) price.toLongOrNull() ?: 0L else 0L))).await()
+                        draft = ""; price = ""; editingEntryId = null
                     }
-                }) { Text("공동 공간에 추가") }
+                }) { Text(if (editingEntryId == null) "공동 공간에 추가" else "공동 기록 수정 저장") }
                 if (section == 3) Text("공동 지출 합계: ${entries.sumOf { it.amount }}원")
                 entries.forEach { entry ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -266,6 +275,11 @@ fun SharedCafePanel() {
                         })
                         Text(entry.text + if (section == 3) " · ${entry.amount}원" else "", modifier = Modifier.weight(1f),
                             color = if (entry.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                        TextButton(enabled = !busy, onClick = {
+                            editingEntryId = entry.id
+                            draft = entry.text
+                            price = if (section == 3) entry.amount.toString() else ""
+                        }) { Text("수정") }
                         TextButton(enabled = !busy, onClick = {
                             val kind = listOf("", "notes", "tasks", "expenses")[section]
                             perform { db.collection("rooms").document(roomId!!).collection(kind).document(entry.id).delete().await() }
