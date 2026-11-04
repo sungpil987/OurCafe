@@ -6,6 +6,8 @@ plugins {
 }
 val firebaseConfigured = file("google-services.json").exists()
 if (firebaseConfigured) apply(plugin = "com.google.gms.google-services")
+val signingFile = file("ourcafe-signing.jks")
+val signingPassword = System.getenv("OURCAFE_KEYSTORE_PASSWORD")
 android {
     namespace = "com.ourcafe.planner"
     compileSdk = 35
@@ -17,7 +19,22 @@ android {
         versionName = "0.2.0"
         buildConfigField("boolean", "FIREBASE_ENABLED", firebaseConfigured.toString())
     }
-    buildTypes { release { isMinifyEnabled = false } }
+    signingConfigs {
+        if (signingFile.exists() && !signingPassword.isNullOrBlank()) {
+            create("ourcafeCi") {
+                storeFile = signingFile
+                storePassword = signingPassword
+                keyAlias = "ourcafe"
+                keyPassword = signingPassword
+            }
+        }
+    }
+    buildTypes {
+        getByName("debug") {
+            if (signingConfigs.findByName("ourcafeCi") != null) signingConfig = signingConfigs.getByName("ourcafeCi")
+        }
+        release { isMinifyEnabled = false }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
