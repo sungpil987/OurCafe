@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,7 +56,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }) { padding ->
-                    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp)) {
+                    Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp).then(if (tab == 0) Modifier.verticalScroll(rememberScrollState()) else Modifier)) {
                         Spacer(Modifier.height(20.dp))
                         Text("OUR CAFÉ ☕", color = sage, style = MaterialTheme.typography.labelLarge)
                         Text(listOf("우리의 카페 만들기", "창업 로드맵", "아이디어 메모", "함께 할 일", "창업 예산")[tab],
@@ -62,6 +64,8 @@ class MainActivity : ComponentActivity() {
                         Spacer(Modifier.height(14.dp))
                         if (tab == 0) {
                             GoogleLoginPanel()
+                            Spacer(Modifier.height(12.dp))
+                            SharedCafePanel()
                             Spacer(Modifier.height(8.dp))
                             val done = completed.size
                             InfoCard("창업 준비 진행률", "$done / ${roadmap.size} 단계 완료")
