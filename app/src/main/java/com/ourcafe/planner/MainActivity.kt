@@ -43,7 +43,11 @@ private val tiles = listOf(
     Tile(Icons.Outlined.Calculate, "창업 견적표", "12개 비용 항목 총합", "startupcost"),
     Tile(Icons.Outlined.FactCheck, "계약 점검", "계약 전 12가지 확인", "contract"),
     Tile(Icons.Outlined.StarRate, "매물 점수", "100점 상권 평가", "scorer"),
-    Tile(Icons.Outlined.EditNote, "우리의 결정", "선택지·결정 이유 기록", "decisions")
+    Tile(Icons.Outlined.EditNote, "우리의 결정", "선택지·결정 이유 기록", "decisions"),
+    Tile(Icons.Outlined.Storefront, "경쟁 카페 조사", "방문·가격·차별점 기록", "competitors"),
+    Tile(Icons.Outlined.RequestQuote, "장비·공사 견적", "업체별 가격·AS 비교", "quotes"),
+    Tile(Icons.Outlined.PriceCheck, "메뉴별 이익", "포장·수수료·폐기 반영", "menuprofit"),
+    Tile(Icons.Outlined.EventAvailable, "오픈 준비", "15개 실무 체크리스트", "launch")
 )
 
 class MainActivity : ComponentActivity() {
@@ -206,6 +210,10 @@ class MainActivity : ComponentActivity() {
                             "contract" -> ContractChecklist09()
                             "scorer" -> PropertyScorer09()
                             "decisions" -> DecisionJournal09()
+                            "competitors" -> CompetitorResearch10()
+                            "quotes" -> VendorQuotes10()
+                            "menuprofit" -> MenuProfit10()
+                            "launch" -> LaunchReady10()
                             "shared" -> {
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
