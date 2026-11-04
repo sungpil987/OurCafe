@@ -6,6 +6,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -18,7 +22,7 @@ import java.security.SecureRandom
 private val cafeStages = listOf("창업 예산 정하기","카페 콘셉트 정하기","고객층 정의하기","경쟁 카페 조사","상권 분석하기","손익분기점 계산","매물 후보 비교","임대차 계약 검토","브랜드 이름과 로고","인테리어 견적 비교","커피 장비 선정","메뉴와 원가표","인허가 준비","가오픈 테스트","정식 오픈")
 private val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 private fun inviteCode(): String = (1..8).map { alphabet[SecureRandom().nextInt(alphabet.length)] }.joinToString("")
-private data class SharedEntry(val id: String, val text: String, val amount: Long = 0L)
+private data class SharedEntry(val id: String, val text: String, val amount: Long = 0L, val date: String = "", val done: Boolean = false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +52,10 @@ fun SharedCafePanel() {
     var draft by remember(userId) { mutableStateOf("") }
     var price by remember(userId) { mutableStateOf("") }
     var entries by remember(userId) { mutableStateOf(emptyList<SharedEntry>()) }
+    var month by remember(userId) { mutableStateOf(YearMonth.now()) }
+    var selectedDate by remember(userId) { mutableStateOf(LocalDate.now()) }
+    var eventDate by remember(userId) { mutableStateOf(LocalDate.now().toString()) }
+    var eventNote by remember(userId) { mutableStateOf("") }
     var completed by remember(userId) { mutableStateOf(emptySet<String>()) }
 
     DisposableEffect(userId) {
@@ -74,10 +82,10 @@ fun SharedCafePanel() {
     DisposableEffect(roomId, section) {
         val id = roomId
         if (id == null || section == 0) onDispose { } else {
-            val kind = listOf("", "notes", "tasks", "expenses")[section]
+            val kind = listOf("", "notes", "tasks", "expenses", "events")[section]
             val registration = db.collection("rooms").document(id).collection(kind).addSnapshotListener { snapshot, ex ->
                 if (ex != null) error = ex.localizedMessage
-                else entries = snapshot?.documents?.map { SharedEntry(it.id, it.getString("text") ?: "", it.getLong("amount") ?: 0L) } ?: emptyList()
+                else entries = snapshot?.documents?.map { SharedEntry(it.id, it.getString("text") ?: "", it.getLong("amount") ?: 0L, it.getString("date") ?: "", it.getBoolean("done") ?: false) } ?: emptyList()
             }
             onDispose { registration.remove() }
         }
@@ -117,8 +125,8 @@ fun SharedCafePanel() {
             Text("상대방에게 이 초대코드를 알려주세요: $code")
             Text("코드는 8자리이며, Google 계정으로 로그인한 상대방이 입력하면 참여할 수 있어요.", style = MaterialTheme.typography.bodySmall)
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                listOf("로드맵", "메모", "할 일", "예산").forEachIndexed { i, label ->
-                    SegmentedButton(selected = section == i, onClick = { section = i; draft = ""; price = ""; entries = emptyList() }, shape = SegmentedButtonDefaults.itemShape(index = i, count = 4)) { Text(label) }
+                listOf("로드맵", "메모", "할 일", "예산", "일정").forEachIndexed { i, label ->
+                    SegmentedButton(selected = section == i, onClick = { section = i; draft = ""; price = ""; entries = emptyList() }, shape = SegmentedButtonDefaults.itemShape(index = i, count = 5)) { Text(label) }
                 }
             }
             if (section == 0) {
@@ -133,6 +141,69 @@ fun SharedCafePanel() {
                         Text(stage, modifier = Modifier.padding(top = 13.dp))
                     }
                 }
+            } else if (section == 4) {
+                Text("공유 월간 달력", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = { month = month.minusMonths(1) }) { Text("‹ 이전") }
+                    Text("${month.year}년 ${month.monthValue}월", modifier = Modifier.padding(top = 12.dp), fontWeight = FontWeight.Bold)
+                    TextButton(onClick = { month = month.plusMonths(1) }) { Text("다음 ›") }
+                }
+                val offset = month.atDay(1).dayOfWeek.value % 7
+                val cellCount = ((offset + month.lengthOfMonth() + 6) / 7) * 7
+                Row(Modifier.fillMaxWidth()) {
+                    listOf("일", "월", "화", "수", "목", "금", "토").forEach { Text(it, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall) }
+                }
+                repeat(cellCount / 7) { week ->
+                    Row(Modifier.fillMaxWidth()) {
+                        repeat(7) { column ->
+                            val number = week * 7 + column - offset + 1
+                            val day = if (number in 1..month.lengthOfMonth()) month.atDay(number) else null
+                            val dateString = day?.toString() ?: ""
+                            val dayEntries = entries.filter { it.date == dateString }
+                            Surface(
+                                onClick = { if (day != null) { selectedDate = day; eventDate = day.toString() } },
+                                enabled = day != null,
+                                color = if (day == selectedDate) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.weight(1f).height(78.dp).padding(2.dp),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            ) {
+                                Column(Modifier.padding(4.dp)) {
+                                    Text(if (day == null) "" else number.toString(), style = MaterialTheme.typography.labelSmall)
+                                    dayEntries.take(2).forEach { event ->
+                                        Text("• ${event.text}", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                    }
+                                    if (dayEntries.size > 2) Text("+${dayEntries.size - 2}", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 일정", fontWeight = FontWeight.Bold)
+                entries.filter { it.date == selectedDate.toString() }.forEach { event ->
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(event.text, modifier = Modifier.weight(1f))
+                        TextButton(enabled = !busy, onClick = {
+                            perform { db.collection("rooms").document(roomId!!).collection("events").document(event.id).delete().await() }
+                        }) { Text("삭제") }
+                    }
+                }
+                OutlinedTextField(value = eventDate, onValueChange = { eventDate = it.take(10) },
+                    label = { Text("날짜 (YYYY-MM-DD)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = draft, onValueChange = { draft = it }, label = { Text("일정 제목") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = eventNote, onValueChange = { eventNote = it }, label = { Text("시간·장소·메모") }, modifier = Modifier.fillMaxWidth())
+                Button(enabled = !busy && draft.isNotBlank() && runCatching { LocalDate.parse(eventDate) }.isSuccess, onClick = {
+                    val title = draft.trim()
+                    val date = eventDate
+                    val detail = eventNote.trim()
+                    perform {
+                        db.collection("rooms").document(roomId!!).collection("events").add(
+                            mapOf("text" to (if (detail.isBlank()) title else "$title · $detail"), "date" to date,
+                                "createdAt" to FieldValue.serverTimestamp())
+                        ).await()
+                        draft = ""; eventNote = ""
+                    }
+                }) { Text("공유 일정 저장") }
+                Text("두 사람의 공동 공간에 저장한 일정은 실시간으로 동기화돼요.", style = MaterialTheme.typography.bodySmall)
             } else {
                 OutlinedTextField(value = draft, onValueChange = { draft = it }, label = { Text(when (section) { 1 -> "공유 메모"; 2 -> "공유 할 일"; else -> "지출 항목" }) }, modifier = Modifier.fillMaxWidth())
                 if (section == 3) OutlinedTextField(value = price, onValueChange = { price = it.filter(Char::isDigit) }, label = { Text("금액 (원)") }, modifier = Modifier.fillMaxWidth())
@@ -147,7 +218,11 @@ fun SharedCafePanel() {
                 if (section == 3) Text("공동 지출 합계: ${entries.sumOf { it.amount }}원")
                 entries.forEach { entry ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(entry.text + if (section == 3) " · ${entry.amount}원" else "", modifier = Modifier.weight(1f))
+                        if (section == 2) Checkbox(checked = entry.done, enabled = !busy, onCheckedChange = { done ->
+                            perform { db.collection("rooms").document(roomId!!).collection("tasks").document(entry.id).update("done", done).await() }
+                        })
+                        Text(entry.text + if (section == 3) " · ${entry.amount}원" else "", modifier = Modifier.weight(1f),
+                            color = if (entry.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
                         TextButton(enabled = !busy, onClick = {
                             val kind = listOf("", "notes", "tasks", "expenses")[section]
                             perform { db.collection("rooms").document(roomId!!).collection(kind).document(entry.id).delete().await() }
