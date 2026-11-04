@@ -162,6 +162,8 @@ class MainActivity : ComponentActivity() {
                                 Spacer(Modifier.width(8.dp))
                                 Text("우리의 공동 공간 열기")
                             }
+                            Spacer(Modifier.height(10.dp))
+                            CafeTools07()
                             Spacer(Modifier.height(20.dp))
                         } else {
                             Text("OUR CAFÉ · WORKSPACE", color = forest, style = MaterialTheme.typography.labelLarge)
@@ -195,7 +197,9 @@ class MainActivity : ComponentActivity() {
                             "interior" -> InteriorBoard06()
                             "expenses" -> BudgetCalculator06(expenses)
                             "menus" -> MenuLab06()
-                            "tasks", "notes", "properties", "schedule" -> {
+                            "properties" -> PropertyCompare07()
+                            "schedule" -> CafeCalendar07()
+                            "tasks", "notes" -> {
                                 val list = when(destination) {
                                     "tasks" -> tasks; "notes" -> notes; "expenses" -> expenses
                                     "interior" -> interior; "properties" -> properties; "menus" -> menus
