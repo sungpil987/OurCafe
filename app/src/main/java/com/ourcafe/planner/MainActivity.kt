@@ -40,7 +40,7 @@ private fun category13(destination: String): String = when (destination) {
     "roadmap", "startupcost", "contract", "scorer", "decisions", "launch", "branding" -> "창업 준비"
     "expenses", "moneydashboard", "profit", "menuprofit", "labor", "seats", "ingredientprices", "recipecost" -> "돈·수익"
     "menus", "recipes", "inventory", "vendors" -> "메뉴·운영"
-    "interior", "properties", "competitors", "quotes" -> "공간·상권"
+    "interior", "properties", "locationstudio", "competitors", "quotes" -> "공간·상권"
     else -> "기록·홍보"
 }
 private val categories13 = listOf("전체", "즐겨찾기", "창업 준비", "돈·수익", "메뉴·운영", "공간·상권", "기록·홍보")
@@ -51,6 +51,7 @@ private val tiles = listOf(
     Tile(Icons.Outlined.Description, "우리의 메모", "아이디어·회의록", "notes"),
     Tile(Icons.Outlined.Image, "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
     Tile(Icons.Outlined.Place, "상권·매물", "후보지 비교·임대정보", "properties"),
+    Tile(Icons.Outlined.Map, "LOCATION 연구소", "매물 비교·방문 체크리스트·지도", "locationstudio"),
     Tile(Icons.Outlined.LocalCafe, "메뉴 연구소", "레시피·원가·시식", "menus"),
     Tile(Icons.Outlined.Calculate, "창업 견적표", "12개 비용 항목 총합", "startupcost"),
     Tile(Icons.Outlined.FactCheck, "계약 점검", "계약 전 12가지 확인", "contract"),
@@ -475,6 +476,7 @@ class MainActivity : ComponentActivity() {
                             "interior" -> InteriorBoard06()
                             "expenses" -> BudgetCalculator06(expenses)
                             "menus" -> MenuLab06()
+                            "locationstudio" -> LocationStudio15()
                             "properties" -> PropertyCompare07()
                             "schedule" -> MonthlyCalendar14(schedule)
                             "tasks", "notes" -> {
