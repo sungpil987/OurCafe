@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.isSystemInDarkTheme
 import org.json.JSONArray
 
 private val forest = Color(0xFF4F7058)
@@ -96,10 +97,36 @@ class MainActivity : ComponentActivity() {
             fun save(key: String, values: Collection<String>) {
                 prefs.edit().putString(key, JSONArray(values.toList()).toString()).apply()
             }
+            var themePreference by remember { mutableStateOf(prefs.getString("theme_mode_15", "system") ?: "system") }
+            val dark = when (themePreference) {
+                "dark" -> true
+                "light" -> false
+                else -> isSystemInDarkTheme()
+            }
+            val palette = if (dark) darkColorScheme(
+                primary = Color(0xFFA5C9AC),
+                onPrimary = Color(0xFF193424),
+                background = Color(0xFF151C18),
+                onBackground = Color(0xFFF1F3ED),
+                surface = Color(0xFF222D26),
+                onSurface = Color(0xFFF1F3ED),
+                surfaceVariant = Color(0xFF344239),
+                onSurfaceVariant = Color(0xFFCED9CF),
+                outline = Color(0xFF819588)
+            ) else lightColorScheme(
+                primary = Color(0xFF4F7058),
+                background = Color(0xFFF5F2EA),
+                surface = Color(0xFFFFFEFA),
+                onSurface = Color(0xFF222922),
+                surfaceVariant = Color(0xFFE5EDE1)
+            )
+            val forest = palette.primary
+            val cream = palette.background
+            val muted = if (dark) Color(0xFFB6C5B9) else Color(0xFF7D897C)
             val doneCount = completed.count { it in roadmap }
-            MaterialTheme(colorScheme = lightColorScheme(primary = forest, background = cream, surface = Color(0xFFFFFEFA))) {
+            MaterialTheme(colorScheme = palette) {
                 Scaffold(containerColor = cream, bottomBar = {
-                    NavigationBar(containerColor = Color(0xFFFFFEFA), tonalElevation = 2.dp) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 2.dp) {
                         listOf("홈", "할 일", "추가", "일정", "우리").forEachIndexed { i, label ->
                             NavigationBarItem(
                                 selected = page == null && tab == i,
@@ -122,7 +149,7 @@ class MainActivity : ComponentActivity() {
                             Spacer(Modifier.height(7.dp))
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("우리의 카페 만들기", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                                Surface(shape = RoundedCornerShape(50), color = Color(0xFFE2EADD)) {
+                                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant) {
                                     Icon(Icons.Outlined.Favorite, contentDescription = "우리의 카페", tint = forest, modifier = Modifier.padding(12.dp).size(26.dp))
                                 }
                             }
@@ -135,7 +162,7 @@ class MainActivity : ComponentActivity() {
                                         Text("${doneCount * 100 / roadmap.size}%", color = forest, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(Modifier.height(13.dp))
-                                    LinearProgressIndicator(progress = { doneCount.toFloat() / roadmap.size }, modifier = Modifier.fillMaxWidth().height(9.dp), color = forest, trackColor = Color(0xFFE2E7DE))
+                                    LinearProgressIndicator(progress = { doneCount.toFloat() / roadmap.size }, modifier = Modifier.fillMaxWidth().height(9.dp), color = forest, trackColor = MaterialTheme.colorScheme.surfaceVariant)
                                     Spacer(Modifier.height(12.dp))
                                     Text("${roadmap.size}개 항목 중 ${doneCount}개 완료", color = muted)
                                 }
@@ -182,7 +209,7 @@ class MainActivity : ComponentActivity() {
                                         Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(168.dp), shape = RoundedCornerShape(22.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                                             Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
                                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Surface(color = Color(0xFFE5EDE1), shape = RoundedCornerShape(15.dp)) {
+                                                    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(15.dp)) {
                                                         Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.padding(9.dp).size(27.dp))
                                                     }
                                                     IconButton(onClick = {
@@ -292,6 +319,34 @@ class MainActivity : ComponentActivity() {
                             "ingredientprices" -> IngredientPrices12()
                             "recipecost" -> RecipeCost12()
                             "shared" -> {
+                                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Outlined.Palette, contentDescription = null, tint = forest)
+                                            Spacer(Modifier.width(10.dp))
+                                            Text("화면 테마", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        }
+                                        Spacer(Modifier.height(8.dp))
+                                        Text("원하는 화면 모드를 선택하세요. 다음 실행에도 유지됩니다.", color = muted, style = MaterialTheme.typography.bodySmall)
+                                        listOf(
+                                            "system" to "휴대폰 설정 따라가기",
+                                            "light" to "라이트 모드",
+                                            "dark" to "다크 모드"
+                                        ).forEach { (value, label) ->
+                                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable {
+                                                themePreference = value
+                                                prefs.edit().putString("theme_mode_15", value).apply()
+                                            }) {
+                                                RadioButton(selected = themePreference == value, onClick = {
+                                                    themePreference = value
+                                                    prefs.edit().putString("theme_mode_15", value).apply()
+                                                })
+                                                Text(label)
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(16.dp))
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
                                 SharedCafePanel()
