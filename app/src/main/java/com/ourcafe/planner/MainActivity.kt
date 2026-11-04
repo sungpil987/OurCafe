@@ -192,7 +192,10 @@ class MainActivity : ComponentActivity() {
                                 Spacer(Modifier.height(12.dp))
                                 Text("공유 데이터는 위 공동 공간에서 관리됩니다. 다른 화면의 기록은 현재 이 휴대폰에 저장돼요.", style = MaterialTheme.typography.bodySmall, color = muted)
                             }
-                            "tasks", "notes", "expenses", "interior", "properties", "menus", "schedule" -> {
+                            "interior" -> InteriorBoard06()
+                            "expenses" -> BudgetCalculator06(expenses)
+                            "menus" -> MenuLab06()
+                            "tasks", "notes", "properties", "schedule" -> {
                                 val list = when(destination) {
                                     "tasks" -> tasks; "notes" -> notes; "expenses" -> expenses
                                     "interior" -> interior; "properties" -> properties; "menus" -> menus
