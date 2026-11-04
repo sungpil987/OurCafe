@@ -1,6 +1,8 @@
 package com.ourcafe.planner
 
 import android.os.Bundle
+import android.content.Intent
+import org.json.JSONObject
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -386,6 +388,34 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 Spacer(Modifier.height(16.dp))
+                                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+                                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text("개인 기록 백업", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        Text("이 휴대폰에 저장된 설정과 기록을 JSON 텍스트로 내보냅니다. 개인 정보가 포함될 수 있으니 안전한 곳에만 보관하세요.",
+                                            style = MaterialTheme.typography.bodySmall)
+                                        OutlinedButton(onClick = {
+                                            val backup = JSONObject()
+                                            prefs.all.forEach { (key, value) ->
+                                                when (value) {
+                                                    is String -> backup.put(key, value)
+                                                    is Boolean -> backup.put(key, value)
+                                                    is Int -> backup.put(key, value)
+                                                    is Long -> backup.put(key, value)
+                                                    is Float -> backup.put(key, value.toDouble())
+                                                }
+                                            }
+                                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_SUBJECT, "SS CAFE PLAN 개인 기록 백업")
+                                                putExtra(Intent.EXTRA_TEXT, backup.toString(2))
+                                            }
+                                            startActivity(Intent.createChooser(intent, "백업 저장 또는 공유"))
+                                        }) { Text("개인 기록 백업 내보내기") }
+                                        Text("공동 공간의 Firebase 기록은 이 백업에 포함되지 않습니다. 복원 기능은 추후 제공 예정입니다.",
+                                            style = MaterialTheme.typography.bodySmall, color = muted)
+                                    }
+                                }
+                                Spacer(Modifier.height(14.dp))
                                 GoogleLoginPanel()
                                 Spacer(Modifier.height(14.dp))
                                 SharedCafePanel()
