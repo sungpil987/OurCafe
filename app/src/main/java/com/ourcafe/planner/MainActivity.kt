@@ -40,7 +40,7 @@ private fun category13(destination: String): String = when (destination) {
     "roadmap", "startupcost", "contract", "scorer", "decisions", "launch", "branding" -> "창업 준비"
     "expenses", "moneydashboard", "profit", "menuprofit", "labor", "seats", "ingredientprices", "recipecost" -> "돈·수익"
     "menus", "recipes", "inventory", "vendors" -> "메뉴·운영"
-    "interior", "properties", "locationstudio", "competitors", "quotes" -> "공간·상권"
+    "interior", "designstudio", "properties", "locationstudio", "competitors", "quotes" -> "공간·상권"
     else -> "기록·홍보"
 }
 private val categories13 = listOf("전체", "즐겨찾기", "창업 준비", "돈·수익", "메뉴·운영", "공간·상권", "기록·홍보")
@@ -50,6 +50,7 @@ private val tiles = listOf(
     Tile(Icons.Outlined.ShowChart, "MONEY 대시보드", "창업 예산·월 고정비·손익분기점", "moneydashboard"),
     Tile(Icons.Outlined.Description, "우리의 메모", "아이디어·회의록", "notes"),
     Tile(Icons.Outlined.Image, "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
+    Tile(Icons.Outlined.Palette, "DESIGN STUDIO", "무드보드·배치 계획·투표·구매", "designstudio"),
     Tile(Icons.Outlined.Place, "상권·매물", "후보지 비교·임대정보", "properties"),
     Tile(Icons.Outlined.Map, "LOCATION 연구소", "매물 비교·방문 체크리스트·지도", "locationstudio"),
     Tile(Icons.Outlined.LocalCafe, "메뉴 연구소", "레시피·원가·시식", "menus"),
@@ -363,6 +364,7 @@ class MainActivity : ComponentActivity() {
                             "labor" -> Labor11()
                             "seats" -> Seats11()
                             "recipes" -> Recipes11()
+                            "designstudio" -> DesignStudio16()
                             "branding" -> Branding11()
                             "marketing" -> Marketing11()
                             "ingredientprices" -> IngredientPrices12()
