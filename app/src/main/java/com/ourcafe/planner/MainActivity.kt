@@ -33,6 +33,14 @@ private val roadmap = listOf(
     "메뉴와 원가표", "인허가 준비", "가오픈 테스트", "정식 오픈"
 )
 private data class Tile(val icon: ImageVector, val title: String, val subtitle: String, val destination: String)
+private fun category13(destination: String): String = when (destination) {
+    "roadmap", "startupcost", "contract", "scorer", "decisions", "launch", "branding" -> "창업 준비"
+    "expenses", "profit", "menuprofit", "labor", "seats", "ingredientprices", "recipecost" -> "돈·수익"
+    "menus", "recipes", "inventory", "vendors" -> "메뉴·운영"
+    "interior", "properties", "competitors", "quotes" -> "공간·상권"
+    else -> "기록·홍보"
+}
+private val categories13 = listOf("전체", "즐겨찾기", "창업 준비", "돈·수익", "메뉴·운영", "공간·상권", "기록·홍보")
 private val tiles = listOf(
     Tile(Icons.Outlined.Assignment, "창업 로드맵", "실전 팁·체크리스트·계약 주의", "roadmap"),
     Tile(Icons.Outlined.AccountBalanceWallet, "예산 관리", "지출·월세·견적", "expenses"),
@@ -69,6 +77,9 @@ class MainActivity : ComponentActivity() {
         } catch (_: Exception) { emptyList() }
         setContent {
             var tab by remember { mutableIntStateOf(0) }
+            var tileQuery13 by remember { mutableStateOf("") }
+            var tileCategory13 by remember { mutableStateOf("전체") }
+            var favorites13 by remember { mutableStateOf(readList("favorite_tiles_13").toSet()) }
             var page by remember { mutableStateOf<String?>(null) }
             var notes by remember { mutableStateOf(readList("notes")) }
             var tasks by remember { mutableStateOf(readList("tasks")) }
@@ -130,19 +141,67 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             Spacer(Modifier.height(18.dp))
-                            tiles.chunked(2).forEach { pair ->
+                            OutlinedTextField(
+                                value = tileQuery13, onValueChange = { tileQuery13 = it },
+                                label = { Text("기능 검색") },
+                                placeholder = { Text("예: 원가, 인테리어, 계약") },
+                                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                                trailingIcon = {
+                                    if (tileQuery13.isNotEmpty()) IconButton(onClick = { tileQuery13 = "" }) {
+                                        Icon(Icons.Outlined.Close, contentDescription = "검색 지우기")
+                                    }
+                                },
+                                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                categories13.forEach { category ->
+                                    FilterChip(
+                                        selected = tileCategory13 == category,
+                                        onClick = { tileCategory13 = category },
+                                        label = { Text(category) }
+                                    )
+                                }
+                            }
+                            val shownTiles13 = tiles.filter { tile ->
+                                (tileCategory13 == "전체" ||
+                                    (tileCategory13 == "즐겨찾기" && tile.destination in favorites13) ||
+                                    category13(tile.destination) == tileCategory13) &&
+                                    (tileQuery13.isBlank() || (tile.title + " " + tile.subtitle + " " + category13(tile.destination))
+                                        .contains(tileQuery13.trim(), ignoreCase = true))
+                            }
+                            Text("기능 ${shownTiles13.size}개", color = muted, style = MaterialTheme.typography.labelMedium)
+                            Spacer(Modifier.height(8.dp))
+                            if (shownTiles13.isEmpty()) {
+                                Text("해당 기능이 없어요. 검색어 또는 카테고리를 바꿔 보세요.", color = muted, modifier = Modifier.padding(vertical = 24.dp))
+                            }
+                            shownTiles13.chunked(2).forEach { pair ->
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                                     pair.forEach { tile ->
-                                        Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(152.dp), shape = RoundedCornerShape(22.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-                                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                                                Surface(color = Color(0xFFE5EDE1), shape = RoundedCornerShape(15.dp)) {
-                                                    Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.padding(10.dp).size(29.dp))
+                                        Card(onClick = { page = tile.destination }, modifier = Modifier.weight(1f).height(168.dp), shape = RoundedCornerShape(22.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+                                            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                                    Surface(color = Color(0xFFE5EDE1), shape = RoundedCornerShape(15.dp)) {
+                                                        Icon(tile.icon, contentDescription = null, tint = forest, modifier = Modifier.padding(9.dp).size(27.dp))
+                                                    }
+                                                    IconButton(onClick = {
+                                                        favorites13 = if (tile.destination in favorites13) favorites13 - tile.destination else favorites13 + tile.destination
+                                                        save("favorite_tiles_13", favorites13)
+                                                    }) {
+                                                        Icon(
+                                                            if (tile.destination in favorites13) Icons.Outlined.Star else Icons.Outlined.StarBorder,
+                                                            contentDescription = if (tile.destination in favorites13) "즐겨찾기 해제" else "즐겨찾기 추가",
+                                                            tint = if (tile.destination in favorites13) forest else muted
+                                                        )
+                                                    }
                                                 }
-                                                Text(tile.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                                Text(tile.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 Text(tile.subtitle, color = muted, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                             }
                                         }
                                     }
+                                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                                 }
                                 Spacer(Modifier.height(12.dp))
                             }
