@@ -49,9 +49,13 @@ service cloud.firestore {
           && request.resource.data.text.size() <= 2000
           && (kind == 'events' || (request.resource.data.amount is int && request.resource.data.amount >= 0));
         allow delete: if kind in ['notes','tasks','expenses','events'] && member(roomId);
-        allow update: if kind == 'tasks' && member(roomId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['done'])
-          && request.resource.data.done is bool;
+        allow update: if kind in ['notes','tasks','expenses','events'] && member(roomId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text','amount','date','done'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 2000
+          && (kind == 'events' || (request.resource.data.amount is int && request.resource.data.amount >= 0))
+          && (kind != 'events' || (request.resource.data.date is string && request.resource.data.date.size() == 10))
+          && (kind != 'tasks' || !('done' in request.resource.data) || request.resource.data.done is bool);
       }
     }
   }
