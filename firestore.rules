@@ -39,6 +39,39 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/invites/$(resource.data.inviteCode)))
       );
       allow delete: if false;
+      // TOGETHER 2.0: room members only, immutable authors and limited mutations.
+      match /{kind}/{entryId} {
+        allow read: if kind in ['assignments17','votes17','budget17','activity17'] && member(roomId);
+        allow create: if kind in ['assignments17','votes17','budget17','activity17']
+          && member(roomId)
+          && request.resource.data.keys().hasOnly(['text','owner','amount','status','votes','createdAt'])
+          && request.resource.data.keys().hasAll(['text','owner','amount','status','votes','createdAt'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.owner is string
+          && (kind == 'assignments17'
+              ? request.resource.data.owner in get(/databases/$(database)/documents/rooms/$(roomId)).data.members
+              : request.resource.data.owner == request.auth.uid)
+          && request.resource.data.amount is int
+          && request.resource.data.amount >= 0
+          && request.resource.data.votes == {}
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.status is string
+          && (kind != 'activity17' || request.resource.data.status == '기록');
+        allow update: if member(roomId) && (
+          (kind == 'assignments17'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status in ['진행 전','진행 중','완료'])
+          ||
+          (kind == 'votes17'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+            && request.resource.data.votes is map
+            && request.resource.data.votes.diff(resource.data.votes).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.votes[request.auth.uid] in ['yes','no'])
+        );
+        allow delete: if kind in ['assignments17','votes17','budget17'] && member(roomId);
+      }
       match /{kind}/{entryId} {
         allow read: if kind in ['notes','tasks','expenses','events'] && member(roomId);
         allow create: if kind in ['notes','tasks','expenses','events'] && member(roomId)
