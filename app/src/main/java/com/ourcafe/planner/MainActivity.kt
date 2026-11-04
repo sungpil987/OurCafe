@@ -38,7 +38,7 @@ private val roadmap = listOf(
 private data class Tile(val icon: ImageVector, val title: String, val subtitle: String, val destination: String)
 private fun category13(destination: String): String = when (destination) {
     "roadmap", "startupcost", "contract", "scorer", "decisions", "launch", "branding" -> "창업 준비"
-    "expenses", "profit", "menuprofit", "labor", "seats", "ingredientprices", "recipecost" -> "돈·수익"
+    "expenses", "moneydashboard", "profit", "menuprofit", "labor", "seats", "ingredientprices", "recipecost" -> "돈·수익"
     "menus", "recipes", "inventory", "vendors" -> "메뉴·운영"
     "interior", "properties", "competitors", "quotes" -> "공간·상권"
     else -> "기록·홍보"
@@ -47,6 +47,7 @@ private val categories13 = listOf("전체", "즐겨찾기", "창업 준비", "�
 private val tiles = listOf(
     Tile(Icons.Outlined.Assignment, "창업 로드맵", "실전 팁·체크리스트·계약 주의", "roadmap"),
     Tile(Icons.Outlined.AccountBalanceWallet, "예산 관리", "지출·월세·견적", "expenses"),
+    Tile(Icons.Outlined.ShowChart, "MONEY 대시보드", "창업 예산·월 고정비·손익분기점", "moneydashboard"),
     Tile(Icons.Outlined.Description, "우리의 메모", "아이디어·회의록", "notes"),
     Tile(Icons.Outlined.Image, "인테리어 보드", "사진·디자인·레퍼런스", "interior"),
     Tile(Icons.Outlined.Place, "상권·매물", "후보지 비교·임대정보", "properties"),
@@ -346,6 +347,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             }
+                            "moneydashboard" -> MoneyDashboard13()
                             "profit" -> CafeProfit08()
                             "startupcost" -> StartupCost09()
                             "contract" -> ContractChecklist09()
