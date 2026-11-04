@@ -1,6 +1,7 @@
 package com.ourcafe.planner
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -124,9 +125,12 @@ fun SharedCafePanel() {
             Text(roomName, style = MaterialTheme.typography.titleMedium)
             Text("상대방에게 이 초대코드를 알려주세요: $code")
             Text("코드는 8자리이며, Google 계정으로 로그인한 상대방이 입력하면 참여할 수 있어요.", style = MaterialTheme.typography.bodySmall)
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("로드맵", "메모", "할 일", "예산", "일정").forEachIndexed { i, label ->
-                    SegmentedButton(selected = section == i, onClick = { section = i; draft = ""; price = ""; entries = emptyList() }, shape = SegmentedButtonDefaults.itemShape(index = i, count = 5)) { Text(label) }
+                    FilterChip(selected = section == i, onClick = {
+                        section = i; draft = ""; price = ""; entries = emptyList()
+                    }, label = { Text(label) })
                 }
             }
             if (section == 0) {
