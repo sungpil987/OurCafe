@@ -57,6 +57,11 @@ fun SharedCafePanel() {
     var selectedDate by remember(userId) { mutableStateOf(LocalDate.now()) }
     var eventDate by remember(userId) { mutableStateOf(LocalDate.now().toString()) }
     var eventNote by remember(userId) { mutableStateOf("") }
+    var sharedTaskTotal by remember(userId) { mutableIntStateOf(0) }
+    var sharedTaskDone by remember(userId) { mutableIntStateOf(0) }
+    var sharedExpenseTotal by remember(userId) { mutableLongStateOf(0L) }
+    var sharedNoteTotal by remember(userId) { mutableIntStateOf(0) }
+    var sharedEventTotal by remember(userId) { mutableIntStateOf(0) }
     var completed by remember(userId) { mutableStateOf(emptySet<String>()) }
 
     DisposableEffect(userId) {
@@ -89,6 +94,29 @@ fun SharedCafePanel() {
                 else entries = snapshot?.documents?.map { SharedEntry(it.id, it.getString("text") ?: "", it.getLong("amount") ?: 0L, it.getString("date") ?: "", it.getBoolean("done") ?: false) } ?: emptyList()
             }
             onDispose { registration.remove() }
+        }
+    }
+    DisposableEffect(roomId) {
+        val id = roomId
+        if (id == null) onDispose { } else {
+            val registrations = listOf("tasks", "expenses", "notes", "events").map { kind ->
+                db.collection("rooms").document(id).collection(kind).addSnapshotListener { snapshot, ex ->
+                    if (ex != null) { error = ex.localizedMessage }
+                    else {
+                        val docs = snapshot?.documents.orEmpty()
+                        when (kind) {
+                            "tasks" -> {
+                                sharedTaskTotal = docs.size
+                                sharedTaskDone = docs.count { it.getBoolean("done") == true }
+                            }
+                            "expenses" -> sharedExpenseTotal = docs.sumOf { it.getLong("amount") ?: 0L }
+                            "notes" -> sharedNoteTotal = docs.size
+                            "events" -> sharedEventTotal = docs.size
+                        }
+                    }
+                }
+            }
+            onDispose { registrations.forEach { it.remove() } }
         }
     }
     fun perform(action: suspend () -> Unit) {
@@ -125,6 +153,17 @@ fun SharedCafePanel() {
             Text(roomName, style = MaterialTheme.typography.titleMedium)
             Text("상대방에게 이 초대코드를 알려주세요: $code")
             Text("코드는 8자리이며, Google 계정으로 로그인한 상대방이 입력하면 참여할 수 있어요.", style = MaterialTheme.typography.bodySmall)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Text("우리의 공동 현황", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("로드맵 ${completed.size}/15 · 할 일 ${sharedTaskDone}/${sharedTaskTotal} 완료")
+                    LinearProgressIndicator(progress = { completed.size.coerceIn(0, 15) / 15f }, modifier = Modifier.fillMaxWidth())
+                    Text("공유 메모 ${sharedNoteTotal}개 · 공유 일정 ${sharedEventTotal}개")
+                    Text("공동 지출 합계 ${"%,d".format(sharedExpenseTotal)}원", fontWeight = FontWeight.Bold)
+                    Text("공동 공간에 저장한 기록 기준이며 변경 사항은 실시간 반영됩니다.", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
             Row(modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("로드맵", "메모", "할 일", "예산", "일정").forEachIndexed { i, label ->
